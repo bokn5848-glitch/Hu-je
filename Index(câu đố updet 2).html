@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Câu Đố Tổng Hợp</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;background:#f2f2f2;text-align:center;padding:20px}
+.box{background:#fff;max-width:520px;margin:auto;padding:20px;border-radius:12px}
+button{padding:10px;margin:6px;border:none;border-radius:8px;font-size:15px;color:#fff;background:#4CAF50}
+.answer{display:block;width:100%;background:#2196F3}
+#hint{color:#ff5722;font-weight:bold}
+select{padding:8px;border-radius:6px;font-size:15px}
+
+/* ===== HIỆU ỨNG ===== */
+#result{
+position:fixed;
+top:0;left:0;
+width:100%;height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:999;
+}
+#result div{
+background:#fff;
+padding:30px 40px;
+border-radius:16px;
+font-size:40px;
+font-weight:bold;
+}
+.correct{color:#4CAF50}
+.wrong{color:#f44336}
+</style>
+</head>
+<body>
+
+<div class="box" id="menu">
+<h2>🧠 CÂU ĐỐ TỔNG HỢP</h2>
+
+<p>📚 Chọn loại câu đố</p>
+<select id="type">
+<option value="meo">Đố mẹo</option>
+<option value="toan">Đố toán</option>
+<option value="eng">Đố tiếng Anh</option>
+<option value="his">Đố lịch sử</option>
+<option value="geo">Đố địa lý</option>
+</select>
+
+<p>⚙️ Chọn độ khó</p>
+<button onclick="start('easy')">Dễ</button>
+<button onclick="start('medium')">Trung bình</button>
+<button onclick="start('hard')">Khó</button>
+</div>
+
+<div class="box" id="game" style="display:none">
+<h3 id="question"></h3>
+<div id="answers"></div>
+<button onclick="useHint()">💡 Gợi ý (-3 điểm)</button>
+<p id="hint"></p>
+<p id="score"></p>
+</div>
+
+<!-- HIỆN ĐÚNG / SAI -->
+<div id="result">
+  <div id="resultText"></div>
+</div>
+
+<script>
+// ===== DOM =====
+const menu=document.getElementById("menu");
+const game=document.getElementById("game");
+const question=document.getElementById("question");
+const answers=document.getElementById("answers");
+const scoreBox=document.getElementById("score");
+const hintBox=document.getElementById("hint");
+const typeSelect=document.getElementById("type");
+const result=document.getElementById("result");
+const resultText=document.getElementById("resultText");
+
+// ===== ÂM THANH =====
+const ctx=new(window.AudioContext||window.webkitAudioContext)();
+const beep=(f,d)=>{
+const o=ctx.createOscillator(),g=ctx.createGain();
+o.frequency.value=f;o.connect(g);g.connect(ctx.destination);
+o.start();
+g.gain.setValueAtTime(0.3,ctx.currentTime);
+g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d);
+o.stop(ctx.currentTime+d);
+};
+
+// ===== TRỘN =====
+const shuffle=a=>{
+for(let i=a.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[a[i],a[j]]=[a[j],a[i]];
+}};
+
+// ===== DATA =====
+const questions=[];
+const add=(t,c,o,l,type,h)=>questions.push({t,c,o,l,type,h});
+
+// ĐỐ MẸO
+add("Cái gì càng rửa càng bẩn?","Nước",
+["Nước","Khăn","Xà phòng","Áo quần"],"easy","meo","Dùng để rửa");
+
+// ĐỐ TOÁN
+for(let i=1;i<=30;i++)
+add(`${i}+${i+2}=?`,""+(i+i+2),
+[""+(i+i+2),""+(i+i),""+(i+i+4),""+(i*2)],
+"easy","toan","Cộng số");
+
+// ĐỐ ANH
+add("Apple nghĩa là gì?","Quả táo",
+["Quả táo","Quả cam","Quả chuối","Quả nho"],
+"easy","eng","Trái cây");
+
+// LỊCH SỬ
+add("Vua đầu tiên Việt Nam?","Hùng Vương",
+["Hùng Vương","Gia Long","Quang Trung","Lý Thái Tổ"],
+"medium","his","Dựng nước");
+
+// ĐỊA LÝ
+add("Thủ đô Việt Nam là gì?","Hà Nội",
+["Hà Nội","Huế","Đà Nẵng","TP.HCM"],
+"easy","geo","Thủ đô");
+
+// ===== GAME =====
+let list=[],i=0,score=0,usedHint=false;
+
+function start(level){
+ctx.resume();
+const type=typeSelect.value;
+list=questions.filter(q=>q.l===level && q.type===type);
+shuffle(list);
+i=0;score=0;
+menu.style.display="none";
+game.style.display="block";
+show();
+}
+
+function show(){
+usedHint=false;
+hintBox.innerText="";
+if(i>=list.length){
+question.innerText="🎉 Hoàn thành!";
+answers.innerHTML=`<h3>Điểm: ${score}/${list.length}</h3>
+<button onclick="location.reload()">🔁 Chơi lại</button>`;
+return;
+}
+const q=list[i];
+question.innerText=q.t;
+scoreBox.innerText=`Câu ${i+1}/${list.length} | Điểm: ${score}`;
+answers.innerHTML="";
+const opts=[...q.o];
+shuffle(opts);
+
+opts.forEach(x=>{
+const b=document.createElement("button");
+b.className="answer";
+b.innerText=x;
+b.onclick=()=>{
+if(x===q.c){
+score++;
+beep(800,0.2);
+showResult(true);
+}else{
+beep(200,0.4);
+showResult(false);
+}
+};
+answers.appendChild(b);
+});
+}
+
+function showResult(ok){
+result.style.display="flex";
+if(ok){
+resultText.innerHTML="🎉 ĐÚNG RỒI ✔️";
+resultText.className="correct";
+}else{
+resultText.innerHTML="❌ SAI RỒI";
+resultText.className="wrong";
+}
+setTimeout(()=>{
+result.style.display="none";
+i++;
+show();
+},600);
+}
+
+function useHint(){
+if(usedHint) return;
+score=Math.max(0,score-3);
+hintBox.innerText="💡 "+list[i].h;
+usedHint=true;
+scoreBox.innerText=`Câu ${i+1}/${list.length} | Điểm: ${score}`;
+}
+</script>
+</body>
+</html>
