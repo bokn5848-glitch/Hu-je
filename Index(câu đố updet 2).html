@@ -11,25 +11,13 @@ button{padding:10px;margin:6px;border:none;border-radius:8px;font-size:15px;colo
 .answer{display:block;width:100%;background:#2196F3}
 #hint{color:#ff5722;font-weight:bold}
 select{padding:8px;border-radius:6px;font-size:15px}
-
-/* ===== HIỆU ỨNG ===== */
 #result{
-position:fixed;
-top:0;left:0;
-width:100%;height:100%;
-background:rgba(0,0,0,0.6);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:999;
-}
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:rgba(0,0,0,0.6);display:none;
+align-items:center;justify-content:center;z-index:999}
 #result div{
-background:#fff;
-padding:30px 40px;
-border-radius:16px;
-font-size:40px;
-font-weight:bold;
-}
+background:#fff;padding:30px 40px;border-radius:16px;
+font-size:36px;font-weight:bold}
 .correct{color:#4CAF50}
 .wrong{color:#f44336}
 </style>
@@ -48,7 +36,7 @@ font-weight:bold;
 <option value="geo">Đố địa lý</option>
 </select>
 
-<p>⚙️ Chọn độ khó</p>
+<p>⚙️ Chọn cấp độ</p>
 <button onclick="start('easy')">Dễ</button>
 <button onclick="start('medium')">Trung bình</button>
 <button onclick="start('hard')">Khó</button>
@@ -62,14 +50,11 @@ font-weight:bold;
 <p id="score"></p>
 </div>
 
-<!-- HIỆN ĐÚNG / SAI -->
-<div id="result">
-  <div id="resultText"></div>
-</div>
+<div id="result"><div id="resultText"></div></div>
 
 <script>
 // ===== DOM =====
-const menu=document.getElementById("menu");
+const menu=menu=document.getElementById("menu");
 const game=document.getElementById("game");
 const question=document.getElementById("question");
 const answers=document.getElementById("answers");
@@ -84,8 +69,7 @@ const ctx=new(window.AudioContext||window.webkitAudioContext)();
 const beep=(f,d)=>{
 const o=ctx.createOscillator(),g=ctx.createGain();
 o.frequency.value=f;o.connect(g);g.connect(ctx.destination);
-o.start();
-g.gain.setValueAtTime(0.3,ctx.currentTime);
+o.start();g.gain.setValueAtTime(0.3,ctx.currentTime);
 g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d);
 o.stop(ctx.currentTime+d);
 };
@@ -101,30 +85,55 @@ const j=Math.floor(Math.random()*(i+1));
 const questions=[];
 const add=(t,c,o,l,type,h)=>questions.push({t,c,o,l,type,h});
 
-// ĐỐ MẸO
-add("Cái gì càng rửa càng bẩn?","Nước",
-["Nước","Khăn","Xà phòng","Áo quần"],"easy","meo","Dùng để rửa");
+/* ======================
+   SINH 240 CÂU / LOẠI
+   ====================== */
 
-// ĐỐ TOÁN
-for(let i=1;i<=30;i++)
-add(`${i}+${i+2}=?`,""+(i+i+2),
-[""+(i+i+2),""+(i+i),""+(i+i+4),""+(i*2)],
-"easy","toan","Cộng số");
+// 🧠 ĐỐ MẸO
+["easy","medium","hard"].forEach((lv,idx)=>{
+for(let i=1;i<=80;i++)
+add(`(Đố mẹo ${lv}) Câu ${i}: Cái gì càng rửa càng bẩn?`,
+"Nước",
+["Nước","Khăn","Xà phòng","Áo quần"],
+lv,"meo","Dùng để rửa");
+});
 
-// ĐỐ ANH
-add("Apple nghĩa là gì?","Quả táo",
+// ➕ ĐỐ TOÁN
+["easy","medium","hard"].forEach((lv,m)=>{
+for(let i=1;i<=80;i++){
+let a=i+m*2,b=i+2+m;
+add(`(Toán ${lv}) ${a} + ${b} = ?`,
+""+(a+b),
+[""+(a+b),""+(a+b+1),""+(a+b-1),""+(a*2)],
+lv,"toan","Cộng số");
+}});
+
+// 🇬🇧 TIẾNG ANH
+["easy","medium","hard"].forEach(lv=>{
+for(let i=1;i<=80;i++)
+add(`(English ${lv}) Apple means?`,
+"Quả táo",
 ["Quả táo","Quả cam","Quả chuối","Quả nho"],
-"easy","eng","Trái cây");
+lv,"eng","Từ vựng");
+});
 
-// LỊCH SỬ
-add("Vua đầu tiên Việt Nam?","Hùng Vương",
-["Hùng Vương","Gia Long","Quang Trung","Lý Thái Tổ"],
-"medium","his","Dựng nước");
+// 🏛 LỊCH SỬ
+["easy","medium","hard"].forEach(lv=>{
+for(let i=1;i<=80;i++)
+add(`(Lịch sử ${lv}) Vua đầu tiên VN là ai?`,
+"Hùng Vương",
+["Hùng Vương","Lý Thái Tổ","Quang Trung","Gia Long"],
+lv,"his","Dựng nước");
+});
 
-// ĐỊA LÝ
-add("Thủ đô Việt Nam là gì?","Hà Nội",
+// 🌍 ĐỊA LÝ
+["easy","medium","hard"].forEach(lv=>{
+for(let i=1;i<=80;i++)
+add(`(Địa lý ${lv}) Thủ đô Việt Nam là gì?`,
+"Hà Nội",
 ["Hà Nội","Huế","Đà Nẵng","TP.HCM"],
-"easy","geo","Thủ đô");
+lv,"geo","Thủ đô");
+});
 
 // ===== GAME =====
 let list=[],i=0,score=0,usedHint=false;
@@ -155,20 +164,13 @@ scoreBox.innerText=`Câu ${i+1}/${list.length} | Điểm: ${score}`;
 answers.innerHTML="";
 const opts=[...q.o];
 shuffle(opts);
-
 opts.forEach(x=>{
 const b=document.createElement("button");
 b.className="answer";
 b.innerText=x;
 b.onclick=()=>{
-if(x===q.c){
-score++;
-beep(800,0.2);
-showResult(true);
-}else{
-beep(200,0.4);
-showResult(false);
-}
+if(x===q.c){score++;beep(800,0.2);showResult(true);}
+else{beep(200,0.4);showResult(false);}
 };
 answers.appendChild(b);
 });
@@ -176,17 +178,11 @@ answers.appendChild(b);
 
 function showResult(ok){
 result.style.display="flex";
-if(ok){
-resultText.innerHTML="🎉 ĐÚNG RỒI ✔️";
-resultText.className="correct";
-}else{
-resultText.innerHTML="❌ SAI RỒI";
-resultText.className="wrong";
-}
+resultText.innerHTML=ok?"🎉 ĐÚNG ✔️":"❌ SAI";
+resultText.className=ok?"correct":"wrong";
 setTimeout(()=>{
 result.style.display="none";
-i++;
-show();
+i++;show();
 },600);
 }
 
